@@ -1,6 +1,6 @@
 {
-  "name": "Haciéndolo Hábito",
-  "short_name": "Hábito",
+  "name": "Tracking Food",
+  "short_name": "Alimentos",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#F2F4EF",

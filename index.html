@@ -3,15 +3,17 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
-<title>Haciéndolo Hábito · Plan de alimentación</title>
+<title>Tracking Food · Plan de alimentación</title>
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='default'>
-<meta name='apple-mobile-web-app-title' content='Hábito'>
+<meta name='apple-mobile-web-app-title' content='Alimentos'>
 <meta name='theme-color' content='#2FA05A'>
 <link rel='apple-touch-icon' href='icon-180.png'>
 <link rel='icon' type='image/png' href='icon-180.png'>
 <link rel='manifest' href='manifest.json'>
+<script src='https://unpkg.com/lucide@0.525.0/dist/umd/lucide.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js'></script>
 <style>
 :root{
   --bg:#F5F6F2; --card:#FFFFFF; --card-glass:rgba(255,255,255,.78);
@@ -69,7 +71,8 @@ body{
   -webkit-tap-highlight-color:transparent;
   min-height:100vh;
 }
-svg.ic{display:block;flex:none}
+svg.ic,svg.lucide{display:block;flex:none}
+i[data-lucide]{display:block;flex:none}
 .wrap{max-width:560px;margin:0 auto;padding:22px 16px 8px}
 header.app{margin-bottom:18px}
 header.app .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -244,7 +247,7 @@ button:focus-visible,.check:focus-visible{outline:2px solid var(--accent);outlin
 <div class="wrap">
   <header class="app">
     <div class="top">
-      <h1>Haciéndolo <em>Hábito</em></h1>
+      <h1>Tracking <em>Food</em></h1>
       <span class="kcal-pill">2200 kcal/d</span>
     </div>
     <p class="sub">Plan de alimentación · Federico Vazquez Crossetto</p>
@@ -275,6 +278,16 @@ const ICON={
   dl:s=>I('<path d="M12 4v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M5 20h14"/>',s),
   dot:s=>I('<circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>',s),
 };
+// ---- íconos Lucide (CDN) con fallback offline al set propio ----
+const LUC={des:"sunrise",col:"apple",alm:"soup",mer:"coffee",cen:"moon",
+  hoy:"clock",sem:"calendar-days",not:"file-text",tip:"lightbulb",bell:"bell",dl:"download",dot:"leaf"};
+const ico=(k,s)=>`<i data-lucide="${LUC[k]}" data-fb="${k}" data-s="${s}" width="${s}" height="${s}" stroke-width="1.9"></i>`;
+function hydrateIcons(){
+  if(window.lucide){lucide.createIcons();return}
+  document.querySelectorAll("i[data-fb]").forEach(el=>{
+    el.outerHTML=ICON[el.dataset.fb](+el.dataset.s);
+  });
+}
 const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 const DIAS_C=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const MEALS=[
@@ -403,12 +416,12 @@ function renderHoy(anim){
     if(d.free) badges+='<span class="badge free">Libre</span>';
     return `<article class="meal ${isNow&&!isDone?'now':''} ${isDone?'done':''} ${d.free?'free':''}">
       <div class="mhead">
-        <span class="mic">${ICON[m.id](21)}</span>
+        <span class="mic">${ico(m.id,21)}</span>
         <span class="mtitle"><span class="mname">${m.n}</span><span class="mtime">${m.t}</span></span>
         <span class="badges">${badges}</span>
       </div>
       <p class="mtext">${esc(d.x)}</p>
-      ${d.nt?`<p class="mnote">${ICON.tip(15)}<span>${esc(d.nt)}</span></p>`:""}
+      ${d.nt?`<p class="mnote">${ico("tip",15)}<span>${esc(d.nt)}</span></p>`:""}
       ${isToday?`<div class="check" role="checkbox" aria-checked="${!!isDone}" tabindex="0" data-meal="${m.id}">
         <span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5 6.5 12 13 4.5"/></svg></span>
         ${isDone?"Cumplida":"Marcar como cumplida"}</div>`:""}
@@ -418,6 +431,7 @@ function renderHoy(anim){
     `<div class="dayhead"><div><h2>${DIAS[selDay]}${isToday?" · hoy":""}</h2>
      ${isToday?'<div class="hint">Tildá cada comida a medida que la cumplís</div>':'<div class="hint">Vista de otro día — el check solo aparece hoy</div>'}</div>${ringHTML}</div>`+
     `<div class="meals">${cards}</div>`;
+  hydrateIcons();
   requestAnimationFrame(()=>{
     movePill();
     const v=$(".ring .val"); if(v)requestAnimationFrame(()=>{v.style.strokeDashoffset=v.dataset.off});
@@ -435,6 +449,15 @@ function renderHoy(anim){
         card.animate([{transform:"scale(1)"},{transform:"scale(.97)"},{transform:"scale(1)"}],
           {duration:300,easing:"cubic-bezier(.34,1.6,.4,1)"});
       }
+      // día completo: festejo
+      if(val&&!REDUCED&&window.confetti){
+        const total=MEALS.filter(m=>PLAN[selDay][m.id]).length;
+        const ok=MEALS.filter(m=>PLAN[selDay][m.id]&&o[m.id]).length;
+        if(ok===total){
+          confetti({particleCount:90,spread:75,origin:{y:.7},
+            colors:["#2FA05A","#1E7F6B","#8FD9A8","#F2C14E"]});
+        }
+      }
       renderHoy(false);
     };
     c.onclick=toggle;
@@ -448,27 +471,29 @@ function renderSemana(){
     MEALS.filter(m=>day[m.id]).map(m=>{
       const d=day[m.id];
       return `<div class="wrow ${d.free?'free':''}">
-        <span class="wic">${ICON[m.id](17)}</span>
+        <span class="wic">${ico(m.id,17)}</span>
         <div><b>${m.n} <span>· ${m.t}</span></b><p>${esc(d.x)}</p></div>
       </div>`;
     }).join("")+
     "</section>").join("")+"</div>";
+  hydrateIcons();
   stagger(".wk .day");
 }
 function renderNotas(){
   $("#view").innerHTML=`
   <div class="remind">
-    <div class="rhead"><span class="mic">${ICON.bell(19)}</span><h3>Recordatorios y widget</h3></div>
+    <div class="rhead"><span class="mic">${ico("bell",19)}</span><h3>Recordatorios y widget</h3></div>
     <p>Descargá el calendario con las 5 comidas de cada día como eventos repetidos semanalmente, con alerta en cada horario y el detalle del plato en el evento.</p>
-    <button class="btn" id="dl-ics">${ICON.dl(17)} Descargar calendario (.ics)</button>
+    <button class="btn" id="dl-ics">${ico("dl",17)} Descargar calendario (.ics)</button>
     <ol>
       <li>Tocá el botón y abrí el archivo descargado (Archivos → Descargas).</li>
       <li>Elegí <b>«Agregar todo»</b> al Calendario (ideal: creá antes un calendario «Alimentación» para poder ocultarlo o borrarlo fácil).</li>
       <li>Para el widget: mantené presionada la pantalla de inicio → «+» → <b>Calendario</b>. Te va a mostrar la próxima comida.</li>
     </ol>
   </div>
-  <div class="notes">${NOTAS.map(n=>`<div class="note">${ICON.dot(10)}<p>${n}</p></div>`).join("")}</div>
+  <div class="notes">${NOTAS.map(n=>`<div class="note">${ico("dot",13)}<p>${n}</p></div>`).join("")}</div>
   <p class="credit">Nutricionista: @c.vazqueznutricion</p>`;
+  hydrateIcons();
   $("#dl-ics").onclick=downloadICS;
 }
 // ---- generador de .ics ----
@@ -496,7 +521,7 @@ function downloadICS(){
       let desc=d.x+(d.nt?"\n\nTip: "+d.nt:"");
       ev.push([
         "BEGIN:VEVENT",
-        "UID:habito-"+m.id+"-"+di+"@habito.local",
+        "UID:trackingfood-"+m.id+"-"+di+"@trackingfood.local",
         "DTSTAMP:20260707T000000Z",
         "DTSTART:"+date+"T"+START[m.id]+"00",
         "DTEND:"+date+"T"+END[m.id]+"00",
@@ -512,7 +537,7 @@ function downloadICS(){
       ].join("\r\n"));
     });
   });
-  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Habito//Plan Alimentacion//ES",
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//TrackingFood//Plan Alimentacion//ES",
     "CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:Alimentación",
     ev.join("\r\n"),"END:VCALENDAR"].join("\r\n")+"\r\n";
   const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
@@ -523,9 +548,9 @@ function downloadICS(){
   setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }
 // ---- tabs ----
-const TABS=[["hoy","Hoy",ICON.hoy],["semana","Semana",ICON.sem],["notas","Notas",ICON.not]];
+const TABS=[["hoy","Hoy"],["semana","Semana"],["notas","Notas"]];
 document.querySelectorAll("nav.tabs button").forEach((b,i)=>{
-  b.innerHTML=TABS[i][2](20)+TABS[i][1];
+  b.innerHTML=ico(TABS[i][0]==="hoy"?"hoy":TABS[i][0]==="semana"?"sem":"not",20)+TABS[i][1];
 });
 const RENDER={hoy:renderHoy,semana:renderSemana,notas:renderNotas};
 function render(){RENDER[tab]()}

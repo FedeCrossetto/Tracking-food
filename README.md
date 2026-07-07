@@ -1,6 +1,6 @@
-# Tracking-food 🥗
+# Tracking Food
 
-App web personal para seguir mi plan de alimentación semanal (elaborado por mi nutricionista).
+App web personal ("Alimentos" en el teléfono) para seguir mi plan de alimentación semanal (elaborado por mi nutricionista).
 
 **Es de uso local/personal** — no está pensada para publicarse como producto ni para otros usuarios: los datos del plan están embebidos en el propio HTML y el progreso se guarda solo en el dispositivo (localStorage).
 
@@ -18,4 +18,4 @@ App web personal para seguir mi plan de alimentación semanal (elaborado por mi 
 
 ## Stack
 
-Un solo `index.html` sin dependencias: HTML + CSS + JavaScript vanilla (Web Animations API para las animaciones). Tema claro/oscuro automático según el sistema.
+Un solo `index.html`: HTML + CSS + JavaScript vanilla, Web Animations API para las animaciones, íconos [Lucide](https://lucide.dev) vía CDN (con fallback SVG propio offline) y [canvas-confetti](https://github.com/catdad/canvas-confetti) al completar el día. Tema claro/oscuro automático según el sistema.
