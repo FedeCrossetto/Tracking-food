@@ -3,8 +3,8 @@
   "short_name": "Alimentos",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#F2F4EF",
-  "theme_color": "#2FA05A",
+  "background_color": "#F3F3F1",
+  "theme_color": "#F5C518",
   "icons": [
     {
       "src": "icon-180.png",
